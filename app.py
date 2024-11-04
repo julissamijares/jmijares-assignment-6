@@ -10,18 +10,20 @@ import base64
 app = Flask(__name__)
 
 def generate_plots(N, mu, sigma2, S):
-    # Simulate data
-    x = np.random.normal(mu, np.sqrt(sigma2), N)
-    y = 2 * x + np.random.normal(0, np.sqrt(sigma2), N)  # Linear relationship with noise
+    # Generate X values from a uniform distribution
+    x = np.random.uniform(low=-20, high=20, size=N)
+    
+    # Introduce more variability to Y by adding more noise and a non-linear component
+    y = 2 * x + np.random.normal(0, np.sqrt(4 * sigma2), N) + np.random.uniform(-10, 10, N)
 
-    # Fit linear regression
+    # Fit linear regression using numpy's polyfit
     slope, intercept = np.polyfit(x, y, 1)
     
     # Generate plot1: regression plot
     plt.figure(figsize=(8, 6))
-    plt.scatter(x, y, label='Data points', alpha=0.5)
+    plt.scatter(x, y, label='Data points', alpha=0.5, color='purple')
     plt.plot(x, slope * x + intercept, color='red', label='Fitted line')
-    plt.title('Linear Regression')
+    plt.title('Linear Regression with Random Data')
 
     # Add the linear fit equation to the plot
     equation_text = f'Y = {slope:.2f}X + {intercept:.2f}'
@@ -35,13 +37,13 @@ def generate_plots(N, mu, sigma2, S):
     plt.savefig(plot1_path)
     plt.close()
 
-    # Generate histograms for slopes and intercepts
+    # Generate histograms for slopes and intercepts from multiple simulations
     slopes = []
     intercepts = []
 
     for _ in range(S):
-        x_sim = np.random.normal(mu, np.sqrt(sigma2), N)
-        y_sim = 2 * x_sim + np.random.normal(0, np.sqrt(sigma2), N)
+        x_sim = np.random.uniform(low=-20, high=20, size=N)
+        y_sim = 2 * x_sim + np.random.normal(0, np.sqrt(4 * sigma2), N) + np.random.uniform(-10, 10, N)
         slope_sim, intercept_sim = np.polyfit(x_sim, y_sim, 1)
         slopes.append(slope_sim)
         intercepts.append(intercept_sim)
@@ -59,17 +61,17 @@ def generate_plots(N, mu, sigma2, S):
 
     plt.title('Histogram of Slopes and Intercepts')
     plt.xlabel('Value')
-    plt.ylabel('Frequency')  # Change y-axis label to Frequency
+    plt.ylabel('Frequency')
     plt.legend()
-    slopes_hist_path = 'static/slopes_hist.png'
-    plt.savefig(slopes_hist_path)
+    plot2_path = 'static/histogram_plot.png'
+    plt.savefig(plot2_path)
     plt.close()
 
     # Calculate proportions of extreme slopes and intercepts
     slope_extreme = np.mean(np.abs(np.array(slopes) - slope) > np.abs(slope))
     intercept_extreme = np.mean(np.abs(np.array(intercepts) - intercept) > np.abs(intercept))
 
-    return plot1_path, slopes_hist_path, slope_extreme, intercept_extreme
+    return plot1_path, plot2_path, slope_extreme, intercept_extreme
 
 
 @app.route("/", methods=["GET", "POST"])
